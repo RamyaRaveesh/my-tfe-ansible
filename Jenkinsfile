@@ -3,6 +3,7 @@ pipeline {
     environment {
         AWS_ACCESS_KEY_ID = credentials('aws-jenkins-credentials') // The ID of your credentials
         AWS_SECRET_ACCESS_KEY = credentials('aws-jenkins-credentials')
+        PEM_PATH = '/tmp/my-sample-app.pem'
     }
     stages {
         stage('Checkout Git Repo') {
@@ -57,9 +58,9 @@ pipeline {
                 script {
                     // Grab the EC2 instance public IP from Terraform output
                     def ec2_ip = sh(script: 'terraform output -raw instance_public_ip', returnStdout: true).trim()
-                    
-                    // Run Ansible Playbook
-                    sh "ansible-playbook -i ${ec2_ip}, -u ec2-user --private-key /path/to/your/private/key.pem install_apache.yml"
+
+                    // Use the private key for SSH access to EC2 and run Ansible playbook
+                    sh "ansible-playbook -i ${ec2_ip}, -u ec2-user --private-key ${env.PEM_PATH} install_apache.yml"
                 }
             }
         }
