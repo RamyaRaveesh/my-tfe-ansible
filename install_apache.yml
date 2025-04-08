@@ -1,0 +1,31 @@
+---
+- name: Install and configure Apache web server
+  hosts: all
+  become: true
+  tasks:
+    - name: Install Apache2
+      apt:
+        name: apache2
+        state: present
+        update_cache: yes  # Ensures apt cache is updated
+
+    - name: Start Apache2 service
+      service:
+        name: apache2
+        state: started
+        enabled: yes  # Ensures Apache starts on boot
+
+    - name: Deploy simple index.html
+      copy:
+        content: |
+          <html>
+            <head><title>CI/CD Web App</title></head>
+            <body>
+              <h1>Hello, World!</h1>
+              <p>This is a simple web server deployed via CI/CD using Apache by Ramya Shridhar Moger.</p>
+            </body>
+          </html>
+        dest: /var/www/html/index.html
+        owner: www-data
+        group: www-data
+        mode: '0644'
