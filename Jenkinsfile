@@ -13,6 +13,21 @@ pipeline {
                 }
             }
         }
+        stage('Check for Terraform Changes') {
+            steps {
+                script {
+                    // Check if any .tf files were modified in the last commit
+                    def changes = sh(script: 'git diff --name-only HEAD~1 HEAD | grep ".tf"', returnStdout: true).trim()
+                    if (changes) {
+                        echo "Terraform files have changed, proceeding with Terraform apply..."
+                    } else {
+                        echo "No changes in Terraform files, skipping terraform apply."
+                        currentBuild.result = 'SUCCESS' // Skip terraform apply if no changes in .tf files
+                        return // Exit pipeline early
+                    }
+                }
+            }
+        }
         stage('Terraform Init') {
             steps {
                 script {
