@@ -3,8 +3,8 @@ pipeline {
     environment {
         AWS_ACCESS_KEY_ID = credentials('aws-jenkins-credentials') // The ID of your credentials
         AWS_SECRET_ACCESS_KEY = credentials('aws-jenkins-credentials')
-        PEM_PATH = '/tmp/my-sample-app.pem'
-        GITHUB_REPO = 'https://github.com/RamyaRaveesh/my-tfe-ansible.git'
+        PEM_PATH = '/tmp/my-sample-app.pem'  // Path to your private key
+        GITHUB_REPO = 'https://github.com/RamyaRaveesh/my-tfe-ansible.git'  // GitHub repository URL
     }
     triggers {
         githubPush() // This ensures the job triggers on GitHub push events
@@ -15,21 +15,6 @@ pipeline {
                 deleteDir()  // Clean workspace
                 sh 'git init'  // Initialize git repository
                 git branch: 'main', url: GITHUB_REPO  // Checkout the specified branch (main)
-            }
-        }
-        stage('Check for Terraform Changes') {
-            steps {
-                script {
-                    // Check if any .tf files were modified in the last commit
-                    def changes = sh(script: 'git diff --name-only HEAD~1 HEAD | grep ".tf"', returnStdout: true).trim()
-                    if (changes) {
-                        echo "Terraform files have changed, proceeding with Terraform apply..."
-                    } else {
-                        echo "No changes in Terraform files, skipping terraform apply."
-                        currentBuild.result = 'SUCCESS' // Skip terraform apply if no changes in .tf files
-                        return // Exit pipeline early
-                    }
-                }
             }
         }
         stage('Terraform Init') {
