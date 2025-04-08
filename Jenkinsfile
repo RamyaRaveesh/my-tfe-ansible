@@ -4,14 +4,17 @@ pipeline {
         AWS_ACCESS_KEY_ID = credentials('aws-jenkins-credentials') // The ID of your credentials
         AWS_SECRET_ACCESS_KEY = credentials('aws-jenkins-credentials')
         PEM_PATH = '/tmp/my-sample-app.pem'
+        GITHUB_REPO = 'https://github.com/RamyaRaveesh/my-tfe-ansible.git'
+    }
+    triggers {
+        githubPush() // This ensures the job triggers on GitHub push events
     }
     stages {
-        stage('Checkout Git Repo') {
+        stage('Checkout Code') {
             steps {
-                script {
-                    // Checkout the Git repository containing your Terraform and Ansible files
-                    git 'https://github.com/RamyaRaveesh/my-tfe-ansible.git'  // Replace with your Git repository URL
-                }
+                deleteDir()  // Clean workspace
+                sh 'git init'  // Initialize git repository
+                git branch: 'main', url: GITHUB_REPO  // Checkout the specified branch (main)
             }
         }
         stage('Check for Terraform Changes') {
