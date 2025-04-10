@@ -5,7 +5,14 @@ pipeline {
         AWS_SECRET_ACCESS_KEY = credentials('aws-jenkins-credentials')
         PEM_PATH = '/var/lib/jenkins/my-sample-app.pem'  // Path to your private key
         GITHUB_REPO = 'https://github.com/RamyaRaveesh/my-tfe-ansible.git'  // GitHub repository URL
+        AWS_REGION = 'us-north-1'
     }
+    steps {
+    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-jenkins-credentials']]) {
+        sh 'terraform plan -out=tfplan'
+    }
+}
+
     triggers {
         githubPush() // This ensures the job triggers on GitHub push events
     }
@@ -18,14 +25,13 @@ pipeline {
             }
         }
         stage('Terraform Init') {
-            steps {
-                script {
-                    // Initialize Terraform
-                    sh 'terraform init'
-                }
-            }
+    steps {
+        dir('terraform') { // Adjust if your Terraform files are in a subfolder
+            sh 'terraform init'
         }
-        stage('Terraform Plan') {
+    }
+}
+ stage('Terraform Plan') {
             steps {
                 script {
                     // Run Terraform plan to see what changes will be applied
