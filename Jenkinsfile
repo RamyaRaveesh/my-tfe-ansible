@@ -10,7 +10,13 @@ pipeline {
     triggers {
         githubPush() // This ensures the job triggers on GitHub push events
     }
-    stages {
+        stages {
+            stage('Clean Workspace') {
+                steps {
+                    deleteDir()  // Deletes old stuff
+                    }
+                }
+
         stage('Checkout Code') {
             steps {
                 deleteDir()  // Clean workspace
