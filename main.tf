@@ -1,5 +1,5 @@
 provider "aws" {
-  region = "eu-north-1b"  # Choose the region you're working in
+  region = "eu-north-1"  # Choose the region you're working in
 }
 
 resource "aws_instance" "web_server" {
