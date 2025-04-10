@@ -1,13 +1,8 @@
 provider "aws" {
   region = "eu-north-1"  # Choose the region you're working in
 }
-
-data "aws_ssm_parameter" "latest_amazon_linux_2_ami" {
-  name = "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2"
-}
-
 resource "aws_instance" "web_server" {
-  ami           = data.aws_ssm_parameter.latest_amazon_linux_2_ami.value
+  ami = "ami-03bfec850b2d31f49"  # Amazon Linux 2023, eu-north-1
   instance_type = "t3.micro"
   key_name      = "my-sample-app"  # Replace with your EC2 key pair
   security_groups = [aws_security_group.web_sg.name]
