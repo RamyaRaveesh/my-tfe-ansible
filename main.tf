@@ -2,8 +2,12 @@ provider "aws" {
   region = "eu-north-1"  # Choose the region you're working in
 }
 
+data "aws_ssm_parameter" "latest_amazon_linux_2_ami" {
+  name = "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2"
+}
+
 resource "aws_instance" "web_server" {
-  ami           = "ami-0c55b159cbfafe1f0"  # Example Amazon Linux AMI ID
+  ami           = data.aws_ssm_parameter.latest_amazon_linux_2_ami.value
   instance_type = "t3.micro"
   key_name      = "my-sample-app"  # Replace with your EC2 key pair
   security_groups = [aws_security_group.web_sg.name]
@@ -12,6 +16,7 @@ resource "aws_instance" "web_server" {
     Name = "WebServer"
   }
 }
+
 
 resource "aws_security_group" "web_sg" {
   name_prefix = "web_sg_"
