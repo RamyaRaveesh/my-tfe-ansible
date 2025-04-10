@@ -5,7 +5,7 @@ pipeline {
         AWS_SECRET_ACCESS_KEY = credentials('aws-jenkins-credentials')
         PEM_PATH = '/var/lib/jenkins/my-sample-app.pem'  // Path to your private key
         GITHUB_REPO = 'https://github.com/RamyaRaveesh/my-tfe-ansible.git'  // GitHub repository URL
-        AWS_REGION = 'us-north-1'
+        AWS_REGION = 'eu-north-1'
     }
     steps {
     withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-jenkins-credentials']]) {
