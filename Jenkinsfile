@@ -26,15 +26,12 @@ pipeline {
         }
         stage('Terraform Init') {
             steps {
-                     sh 'terraform init'
-                }
+                sh 'terraform init -input=false -no-color'
             }
-        stage('Terraform Plan') {
+        }
+         stage('Terraform Plan') {
             steps {
-                script {
-                    // Run Terraform plan to see what changes will be applied
-                    sh 'terraform plan -out=tfplan'
-                }
+                sh 'terraform plan -input=false -out=tfplan -no-color'
             }
         }
         stage('Terraform Apply') {
