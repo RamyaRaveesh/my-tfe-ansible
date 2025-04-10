@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        AWS_ACCESS_KEY_ID = credentials('aws-jenkins-credentials') // The ID of your credentials
+        AWS_ACCESS_KEY_ID = credentials('aws-jenkins-credentials')  // The ID of your credentials
         AWS_SECRET_ACCESS_KEY = credentials('aws-jenkins-credentials')
         PEM_PATH = '/var/lib/jenkins/my-sample-app.pem'  // Path to your private key
         GITHUB_REPO = 'https://github.com/RamyaRaveesh/my-tfe-ansible.git'  // GitHub repository URL
@@ -18,39 +18,29 @@ pipeline {
                 git branch: 'main', url: GITHUB_REPO  // Checkout the specified branch (main)
             }
         }
-
         stage('Terraform Init') {
             steps {
                 dir('terraform') { // Adjust if your Terraform files are in a subfolder
-                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-jenkins-credentials']]) {
-                        sh 'terraform init'
-                    }
+                    sh 'terraform init'
                 }
             }
         }
-
         stage('Terraform Plan') {
             steps {
-                dir('terraform') { // Adjust if your Terraform files are in a subfolder
-                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-jenkins-credentials']]) {
-                        // Run Terraform plan to see what changes will be applied
-                        sh 'terraform plan -out=tfplan'
-                    }
+                script {
+                    // Run Terraform plan to see what changes will be applied
+                    sh 'terraform plan -out=tfplan'
                 }
             }
         }
-
         stage('Terraform Apply') {
             steps {
-                dir('terraform') { // Adjust if your Terraform files are in a subfolder
-                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-jenkins-credentials']]) {
-                        // Apply the Terraform plan
-                        sh 'terraform apply "tfplan"'
-                    }
+                script {
+                    // Apply the Terraform plan
+                    sh 'terraform apply "tfplan"'
                 }
             }
         }
-
         stage('Ansible Playbook') {
             steps {
                 script {
@@ -63,10 +53,8 @@ pipeline {
             }
         }
     }
-    
     post {
         success {
-            // Send email on success
             emailext(
                 to: 'ramyashridharmoger@gmail.com',  // Replace with your Gmail address
                 subject: "Pipeline Success: ${currentBuild.fullDisplayName}",
@@ -84,7 +72,6 @@ pipeline {
             )
         }
         failure {
-            // Send email on failure
             emailext(
                 to: 'ramyashridharmoger@gmail.com',  // Replace with your Gmail address
                 subject: "Pipeline Failure: ${currentBuild.fullDisplayName}",
