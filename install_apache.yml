@@ -1,17 +1,16 @@
----
 - name: Install and configure Apache web server
   hosts: all
   become: true
   tasks:
-    - name: Install Apache2
-      apt:
-        name: apache2
+    - name: Install Apache2 (Amazon Linux)
+      yum:
+        name: httpd
         state: present
-        update_cache: yes  # Ensures apt cache is updated
+        update_cache: yes  # Ensures yum cache is updated
 
-    - name: Start Apache2 service
+    - name: Start Apache service
       service:
-        name: apache2
+        name: httpd
         state: started
         enabled: yes  # Ensures Apache starts on boot
 
@@ -26,6 +25,6 @@
             </body>
           </html>
         dest: /var/www/html/index.html
-        owner: www-data
-        group: www-data
+        owner: apache
+        group: apache
         mode: '0644'
