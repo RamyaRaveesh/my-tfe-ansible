@@ -7,12 +7,6 @@ pipeline {
         GITHUB_REPO = 'https://github.com/RamyaRaveesh/my-tfe-ansible.git'  // GitHub repository URL
         AWS_REGION = 'eu-north-1'
     }
-    steps {
-    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-jenkins-credentials']]) {
-        sh 'terraform plan -out=tfplan'
-    }
-}
-
     triggers {
         githubPush() // This ensures the job triggers on GitHub push events
     }
@@ -24,29 +18,39 @@ pipeline {
                 git branch: 'main', url: GITHUB_REPO  // Checkout the specified branch (main)
             }
         }
+
         stage('Terraform Init') {
-    steps {
-        dir('terraform') { // Adjust if your Terraform files are in a subfolder
-            sh 'terraform init'
-        }
-    }
-}
- stage('Terraform Plan') {
             steps {
-                script {
-                    // Run Terraform plan to see what changes will be applied
-                    sh 'terraform plan -out=tfplan'
+                dir('terraform') { // Adjust if your Terraform files are in a subfolder
+                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-jenkins-credentials']]) {
+                        sh 'terraform init'
+                    }
                 }
             }
         }
+
+        stage('Terraform Plan') {
+            steps {
+                dir('terraform') { // Adjust if your Terraform files are in a subfolder
+                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-jenkins-credentials']]) {
+                        // Run Terraform plan to see what changes will be applied
+                        sh 'terraform plan -out=tfplan'
+                    }
+                }
+            }
+        }
+
         stage('Terraform Apply') {
             steps {
-                script {
-                    // Apply the Terraform plan
-                    sh 'terraform apply "tfplan"'
+                dir('terraform') { // Adjust if your Terraform files are in a subfolder
+                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-jenkins-credentials']]) {
+                        // Apply the Terraform plan
+                        sh 'terraform apply "tfplan"'
+                    }
                 }
             }
         }
+
         stage('Ansible Playbook') {
             steps {
                 script {
@@ -59,6 +63,7 @@ pipeline {
             }
         }
     }
+    
     post {
         success {
             // Send email on success
