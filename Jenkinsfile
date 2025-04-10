@@ -20,11 +20,9 @@ pipeline {
         }
         stage('Terraform Init') {
             steps {
-                dir('terraform') { // Adjust if your Terraform files are in a subfolder
-                    sh 'terraform init'
+                     sh 'terraform init'
                 }
             }
-        }
         stage('Terraform Plan') {
             steps {
                 script {
