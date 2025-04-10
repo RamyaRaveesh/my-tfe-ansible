@@ -30,6 +30,7 @@ pipeline {
             }
         }
          stage('Terraform Plan') {
+             options { timeout(time: 5, unit: 'MINUTES') }
             steps {
                 sh 'terraform plan -input=false -out=tfplan -no-color'
             }
