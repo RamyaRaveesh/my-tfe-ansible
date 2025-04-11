@@ -14,19 +14,23 @@ pipeline {
         stage('Checkout Code') {
             steps {
                 deleteDir()  // Clean workspace
-                sh 'git init'  // Initialize git repository
                 git branch: 'main', url: GITHUB_REPO  // Checkout the specified branch (main)
             }
         }
-        stage('Terraform Init') {
+        stage('Terraform init') {
             steps {
-                sh 'terraform init -input=false -no-color'
+                sh 'terraform init'
             }
         }
-         stage('Terraform Plan') {
-             options { timeout(time: 5, unit: 'MINUTES') }
+        stage('Plan') {
             steps {
-                sh 'terraform plan -input=false -out=tfplan -no-color'
+                sh 'terraform plan -out tfplan'
+                sh 'terraform show -no-color tfplan > tfplan.txt'
+            }
+        }
+        stage('Terraform Validate') {
+            steps {
+                sh 'terraform validate'
             }
         }
         stage('Terraform Apply') {
