@@ -1,8 +1,8 @@
 pipeline {
     agent any
     environment {
-        AWS_ACCESS_KEY_ID = credentials('aws-jenkins-credentials')  // The ID of your credentials
-        AWS_SECRET_ACCESS_KEY = credentials('aws-jenkins-credentials')
+        AWS_ACCESS_KEY_ID = credentials('aws-access-key')  // The ID of your credentials
+        AWS_SECRET_ACCESS_KEY = credentials('aws-secret-key')
         PEM_PATH = '/var/lib/jenkins/my-sample-app.pem'  // Path to your private key
         GITHUB_REPO = 'https://github.com/RamyaRaveesh/my-tfe-ansible.git'  // GitHub repository URL
         AWS_REGION = 'eu-north-1'
@@ -11,12 +11,6 @@ pipeline {
         githubPush() // This ensures the job triggers on GitHub push events
     }
         stages {
-            stage('Clean Workspace') {
-                steps {
-                    deleteDir()  // Deletes old stuff
-                    }
-                }
-
         stage('Checkout Code') {
             steps {
                 deleteDir()  // Clean workspace
