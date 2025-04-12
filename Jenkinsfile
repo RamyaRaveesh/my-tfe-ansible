@@ -26,11 +26,14 @@ pipeline {
             }
         }
 
-        stage('Terraform Plan') {
+           stage('Terraform Plan') {
             options { timeout(time: 5, unit: 'MINUTES') }
             steps {
-                sh 'terraform plan -out=tfplan'
-                sh 'terraform show -no-color tfplan > tfplan.txt'
+                dir('my-tfe-ansible') {
+                    sh 'echo "Available files:" && ls -la'
+                    sh 'echo "Starting terraform plan..."'
+                    sh 'TF_LOG=DEBUG terraform plan -out=tfplan || (echo "Terraform plan failed or hung" && exit 1)'
+                }
             }
         }
 
