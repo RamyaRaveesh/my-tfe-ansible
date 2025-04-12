@@ -15,52 +15,42 @@ pipeline {
             steps {
                 deleteDir()
                 git branch: 'main', url: GITHUB_REPO
-                sh 'ls -l' // Debug to confirm contents
+                sh 'ls -l' // Debug: See repo files
             }
         }
 
         stage('Terraform Init') {
             steps {
-                dir('my-tfe-ansible') {
-                    sh 'rm -rf .terraform*'
-                    sh 'terraform init'
-                }
+                sh 'rm -rf .terraform*'
+                sh 'terraform init'
             }
         }
 
         stage('Terraform Plan') {
             options { timeout(time: 5, unit: 'MINUTES') }
             steps {
-                dir('my-tfe-ansible') {
-                    sh 'terraform plan -out=tfplan'
-                    sh 'terraform show -no-color tfplan > tfplan.txt'
-                }
+                sh 'terraform plan -out=tfplan'
+                sh 'terraform show -no-color tfplan > tfplan.txt'
             }
         }
 
         stage('Terraform Validate') {
             steps {
-                dir('my-tfe-ansible') {
-                    sh 'terraform validate'
-                }
+                sh 'terraform validate'
             }
         }
 
         stage('Terraform Apply') {
             steps {
-                dir('my-tfe-ansible') {
-                    sh 'terraform apply tfplan'
-                }
+                sh 'terraform apply tfplan'
             }
         }
 
         stage('Ansible Playbook') {
             steps {
-                dir('my-tfe-ansible') {
-                    script {
-                        def ec2_ip = sh(script: 'terraform output -raw instance_public_ip', returnStdout: true).trim()
-                        sh "ansible-playbook -i ${ec2_ip}, -u ec2-user --private-key ${env.PEM_PATH} install_apache.yml"
-                    }
+                script {
+                    def ec2_ip = sh(script: 'terraform output -raw instance_public_ip', returnStdout: true).trim()
+                    sh "ansible-playbook -i ${ec2_ip}, -u ec2-user --private-key ${env.PEM_PATH} install_apache.yml"
                 }
             }
         }
@@ -72,7 +62,7 @@ pipeline {
                 to: 'ramyashridharmoger@gmail.com',
                 subject: "Pipeline Success: ${currentBuild.fullDisplayName}",
                 body: """The pipeline ran successfully!
-                
+
 Build: ${currentBuild.fullDisplayName}
 Status: Success
 Commit: ${env.GIT_COMMIT}
