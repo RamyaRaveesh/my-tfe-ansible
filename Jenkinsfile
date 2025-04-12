@@ -15,19 +15,22 @@ pipeline {
                 git branch: 'main', url: GITHUB_REPO  // Checkout the specified branch (main)
             }
         }
-                stage('Terraform init') {
-            steps {
-                sh 'rm -rf .terraform*'  // Clean up any old Terraform configuration files
-                sh 'terraform init'  // Reinitialize the working directory
-            }
-        }
+        stage('Terraform init')
+            {
+                steps {
+                        dir('my-tfe-ansible') {  // Change to the correct directory
+                            sh 'rm -rf .terraform*'  // Clean up old Terraform files
+                            sh 'terraform init'  // Initialize Terraform
+                        }
+                    }
+                }
 
         stage('Plan') {
             options { timeout(time: 5, unit: 'MINUTES') }
             steps {
-                dir('my-tfe-ansible') {
-                    sh 'terraform plan -out tfplan'
-                    sh 'terraform show -no-color tfplan > tfplan.txt'
+                dir('my-tfe-ansible') {  // Ensure we're in the correct directory
+                    sh 'terraform plan -out=tfplan'  // Run terraform plan
+                    sh 'terraform show -no-color tfplan > tfplan.txt'  // Show the plan output
                 }
             }
         }
