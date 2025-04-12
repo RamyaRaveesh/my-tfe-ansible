@@ -17,7 +17,10 @@ pipeline {
         }
         stage('Terraform init') {
             steps {
+                dir('my-tfe-ansible') 
+                {
                 sh 'terraform init'
+                }    
             }
         }
         stage('Plan') {
