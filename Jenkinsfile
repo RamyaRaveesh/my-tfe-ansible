@@ -15,7 +15,8 @@ pipeline {
             steps {
                 deleteDir()
                 git branch: 'main', url: GITHUB_REPO
-                sh 'ls -l' // Debug: See repo files
+                sh 'echo "✅ Checked out code!"'
+                sh 'pwd && ls -la'
             }
         }
 
@@ -26,14 +27,12 @@ pipeline {
             }
         }
 
-           stage('Terraform Plan') {
+        stage('Terraform Plan') {
             options { timeout(time: 5, unit: 'MINUTES') }
             steps {
-                dir('my-tfe-ansible') {
-                    sh 'echo "Available files:" && ls -la'
-                    sh 'echo "Starting terraform plan..."'
-                    sh 'TF_LOG=DEBUG terraform plan -out=tfplan || (echo "Terraform plan failed or hung" && exit 1)'
-                }
+                sh 'echo "🧪 Planning resources..."'
+                sh 'TF_LOG=DEBUG terraform plan -input=false -out=tfplan'
+                sh 'terraform show -no-color tfplan > tfplan.txt'
             }
         }
 
@@ -45,7 +44,7 @@ pipeline {
 
         stage('Terraform Apply') {
             steps {
-                sh 'terraform apply tfplan'
+                sh 'terraform apply -auto-approve tfplan'
             }
         }
 
@@ -53,6 +52,7 @@ pipeline {
             steps {
                 script {
                     def ec2_ip = sh(script: 'terraform output -raw instance_public_ip', returnStdout: true).trim()
+                    echo "Deploying Apache to EC2 at ${ec2_ip}"
                     sh "ansible-playbook -i ${ec2_ip}, -u ec2-user --private-key ${env.PEM_PATH} install_apache.yml"
                 }
             }
@@ -63,7 +63,7 @@ pipeline {
         success {
             emailext(
                 to: 'ramyashridharmoger@gmail.com',
-                subject: "Pipeline Success: ${currentBuild.fullDisplayName}",
+                subject: "✅ Pipeline Success: ${currentBuild.fullDisplayName}",
                 body: """The pipeline ran successfully!
 
 Build: ${currentBuild.fullDisplayName}
@@ -75,7 +75,7 @@ URL: ${env.BUILD_URL}"""
         failure {
             emailext(
                 to: 'ramyashridharmoger@gmail.com',
-                subject: "Pipeline Failure: ${currentBuild.fullDisplayName}",
+                subject: "❌ Pipeline Failure: ${currentBuild.fullDisplayName}",
                 body: """Pipeline failed!
 
 Build: ${currentBuild.fullDisplayName}
