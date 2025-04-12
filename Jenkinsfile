@@ -8,31 +8,34 @@ pipeline {
     triggers {
         githubPush() // This ensures the job triggers on GitHub push events
     }
-        stages {
+    stages {
         stage('Checkout Code') {
             steps {
                 deleteDir()  // Clean workspace
                 git branch: 'main', url: GITHUB_REPO  // Checkout the specified branch (main)
             }
         }
-        stage('Terraform init') {
+                stage('Terraform init') {
             steps {
-                dir('my-tfe-ansible') 
-                {
-                sh 'terraform init'
-                }    
+                sh 'rm -rf .terraform*'  // Clean up any old Terraform configuration files
+                sh 'terraform init'  // Reinitialize the working directory
             }
         }
+
         stage('Plan') {
             options { timeout(time: 5, unit: 'MINUTES') }
             steps {
-                sh 'terraform plan -out tfplan'
-                sh 'terraform show -no-color tfplan > tfplan.txt'
+                dir('my-tfe-ansible') {
+                    sh 'terraform plan -out tfplan'
+                    sh 'terraform show -no-color tfplan > tfplan.txt'
+                }
             }
         }
         stage('Terraform Validate') {
             steps {
-                sh 'terraform validate'
+                dir('my-tfe-ansible') {
+                    sh 'terraform validate'
+                }
             }
         }
         stage('Terraform Apply') {
