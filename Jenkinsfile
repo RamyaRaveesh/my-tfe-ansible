@@ -24,7 +24,11 @@ pipeline {
             steps {
                 script {
                     sh "chmod 400 ${PEM_PATH}"
-
+                    // 🛠️ New: Copy PEM to the remote EC2 before SSH
+                    sh """
+                        echo "📤 Copying PEM file to Terraform EC2"
+                        scp -o StrictHostKeyChecking=no -i ${PEM_PATH} ${PEM_PATH} ubuntu@${TFE_IP}:/home/ubuntu/my-sample-app.pem
+                    """
                     def sshCommand = """
                     ssh -o StrictHostKeyChecking=no -i ${PEM_PATH} ubuntu@${TFE_IP} << 'EOF'
                         set -e
@@ -53,8 +57,8 @@ pipeline {
 
                         echo "🌐 Verifying Apache"
                         curl http://\$EC2_IP
-                    EOF
-                    """
+                EOF
+                """
                     sh sshCommand
                 }
             }
