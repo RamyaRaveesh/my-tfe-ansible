@@ -21,11 +21,12 @@ pipeline {
         }
 
         stage('Terraform Init') {
-            steps {
-                sh 'rm -rf .terraform*'
-                sh 'terraform init'
-            }
+        steps {
+            sh 'rm -rf .terraform*'
+            sh 'terraform init -input=false'
         }
+    }
+
 
         stage('Terraform Plan') {
             options { timeout(time: 5, unit: 'MINUTES') }
