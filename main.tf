@@ -11,8 +11,6 @@ resource "aws_instance" "web_server" {
     Name = "WebServer"
   }
 }
-
-
 resource "aws_security_group" "web_sg" {
   name_prefix = "web_sg_"
 
@@ -21,6 +19,13 @@ resource "aws_security_group" "web_sg" {
     to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]  # Allows SSH from anywhere (you can restrict if needed)
   }
 
   egress {
