@@ -1,21 +1,21 @@
 pipeline {
     agent any
     environment {
-        PEM_PATH = '/var/lib/jenkins/my-sample-app.pem'
-        REMOTE_IP = '16.170.246.135'
-        GITHUB_REPO = 'https://github.com/RamyaRaveesh/my-tfe-ansible.git'
-        AWS_REGION = 'eu-north-1'
+        PEM_PATH = '/var/lib/jenkins/my-sample-app.pem'  // Path to your PEM file
+        REMOTE_IP = '16.170.246.135'                     // Your remote EC2 IP
+        GITHUB_REPO = 'https://github.com/RamyaRaveesh/my-tfe-ansible.git'  // GitHub repo URL
+        AWS_REGION = 'eu-north-1'                        // AWS Region
     }
 
     triggers {
-        githubPush()
+        githubPush()  // Trigger on GitHub push
     }
 
     stages {
         stage('Checkout Code (for logs only)') {
             steps {
-                deleteDir()
-                git branch: 'main', url: GITHUB_REPO
+                deleteDir()  // Clean workspace
+                git branch: 'main', url: GITHUB_REPO  // Checkout GitHub repository
                 sh 'echo "✅ Checked out code (for Jenkins logs only)!"'
             }
         }
@@ -23,6 +23,12 @@ pipeline {
         stage('Remote Terraform & Ansible Execution') {
             steps {
                 script {
+                    // Switch to jenkins user and ensure PEM file permissions are correct
+                    sh '''
+                    sudo su - jenkins -c "chmod 400 ${PEM_PATH}"
+                    sudo su - jenkins -c "echo '✅ Permissions set for the PEM file'"
+                    '''
+
                     def sshCommand = """
                     ssh -o StrictHostKeyChecking=no -i ${PEM_PATH} ubuntu@${REMOTE_IP} << 'EOF'
                         set -e
@@ -43,13 +49,13 @@ pipeline {
 
                         echo "📦 Running Ansible"
                         EC2_IP=\$(terraform output -raw instance_public_ip)
-                        ansible-playbook -i "\$EC2_IP," -u ec2-user --private-key ~/my-sample-app.pem install_apache.yml
+                        ansible-playbook -i "\$EC2_IP," -u ec2-user --private-key ${PEM_PATH} install_apache.yml
 
                         echo "🌐 Verifying Apache"
                         curl http://\$EC2_IP
                     EOF
                     """
-                    sh sshCommand
+                    sh sshCommand  // Execute the SSH command
                 }
             }
         }
