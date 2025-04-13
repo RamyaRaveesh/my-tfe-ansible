@@ -1,21 +1,20 @@
 pipeline {
     agent any
     environment {
-        PEM_PATH = '/var/lib/jenkins/my-sample-app.pem'  // Path to your PEM file
-        REMOTE_IP = '16.170.246.135'                     // Your remote EC2 IP
-        GITHUB_REPO = 'https://github.com/RamyaRaveesh/my-tfe-ansible.git'  // GitHub repo URL
-        AWS_REGION = 'eu-north-1'                        // AWS Region
+        PEM_PATH = '/var/lib/jenkins/my-sample-app.pem'  // Path to PEM file
+        GITHUB_REPO = 'https://github.com/RamyaRaveesh/my-tfe-ansible.git'  // Your repo
+        AWS_REGION = 'eu-north-1'
     }
 
     triggers {
-        githubPush()  // Trigger on GitHub push
+        githubPush()
     }
 
     stages {
         stage('Checkout Code (for logs only)') {
             steps {
-                deleteDir()  // Clean workspace
-                git branch: 'main', url: GITHUB_REPO  // Checkout GitHub repository
+                deleteDir()
+                git branch: 'main', url: GITHUB_REPO
                 sh 'echo "✅ Checked out code (for Jenkins logs only)!"'
             }
         }
@@ -23,18 +22,16 @@ pipeline {
         stage('Remote Terraform & Ansible Execution') {
             steps {
                 script {
-                    // Ensure proper permissions for the PEM file
-                    sh '''
-                    sudo su - jenkins -c "chmod 400 ${PEM_PATH}"
-                    sudo su - jenkins -c "echo '✅ Permissions set for the PEM file'"
-                    '''
+                    // Ensure proper permissions on the PEM file
+                    sh "chmod 400 ${PEM_PATH}"
 
+                    // SSH into the remote Terraform EC2 and perform everything
                     def sshCommand = """
-                    ssh -o StrictHostKeyChecking=no -i ${PEM_PATH} ubuntu@${REMOTE_IP} << 'EOF'
+                    ssh -o StrictHostKeyChecking=no -i ${PEM_PATH} ubuntu@your-terraform-ec2-ip << 'EOF'
                         set -e
                         echo "✅ Connected to Terraform EC2"
 
-                        # Clone or pull the repo
+                        # Clone the repo if not exists
                         if [ ! -d my-tfe-ansible ]; then
                             git clone ${GITHUB_REPO}
                         fi
@@ -48,14 +45,24 @@ pipeline {
                         terraform apply -auto-approve tfplan
 
                         echo "📦 Running Ansible"
-                        EC2_IP=\$(terraform output -raw instance_public_ip)
-                        ansible-playbook -i "\$EC2_IP," -u ec2-user --private-key ${PEM_PATH} install_apache.yml
+
+                        # Get the EC2 instance IP from Terraform output
+                        export EC2_IP=\$(terraform output -raw instance_public_ip)
+
+                        echo "Using EC2_IP: \$EC2_IP"
+
+                        # Run Ansible using EC2_IP
+                     ansible-playbook -i "\$EC2_IP," -u ec2-user \
+                          --private-key ~/my-sample-app.pem \
+                          --ssh-extra-args="-o StrictHostKeyChecking=no" \
+                          install_apache.yml
+                        
 
                         echo "🌐 Verifying Apache"
                         curl http://\$EC2_IP
                     EOF
                     """
-                    sh sshCommand  // Execute the SSH command
+                    sh sshCommand
                 }
             }
         }
