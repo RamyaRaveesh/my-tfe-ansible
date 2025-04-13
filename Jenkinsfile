@@ -23,7 +23,7 @@ pipeline {
         stage('Remote Terraform & Ansible Execution') {
             steps {
                 script {
-                    // Switch to jenkins user and ensure PEM file permissions are correct
+                    // Ensure proper permissions for the PEM file
                     sh '''
                     sudo su - jenkins -c "chmod 400 ${PEM_PATH}"
                     sudo su - jenkins -c "echo '✅ Permissions set for the PEM file'"
