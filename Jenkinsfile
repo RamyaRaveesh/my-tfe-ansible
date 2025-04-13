@@ -69,7 +69,7 @@ pipeline {
 
                         echo "🌐 Verifying Apache"
                         curl http://\$EC2_IP
-                    EOF
+                   EOF
                 """
                     // Execute the SSH command to run Terraform and Ansible
                     sh sshCommand
