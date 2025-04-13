@@ -1,9 +1,10 @@
 pipeline {
     agent any
     environment {
-        PEM_PATH = '/var/lib/jenkins/my-sample-app.pem'  // Path to PEM file
-        GITHUB_REPO = 'https://github.com/RamyaRaveesh/my-tfe-ansible.git'  // Your repo
+        PEM_PATH = '/var/lib/jenkins/my-sample-app.pem'
+        GITHUB_REPO = 'https://github.com/RamyaRaveesh/my-tfe-ansible.git'
         AWS_REGION = 'eu-north-1'
+        TFE_IP = '16.170.246.135'
     }
 
     triggers {
@@ -19,19 +20,16 @@ pipeline {
             }
         }
 
-        stage('Remote Terraform & Ansible Execution') {
+        stage('Run Terraform & Ansible from Remote') {
             steps {
                 script {
-                    // Ensure proper permissions on the PEM file
                     sh "chmod 400 ${PEM_PATH}"
 
-                    // SSH into the remote Terraform EC2 and perform everything
                     def sshCommand = """
-                    ssh -o StrictHostKeyChecking=no -i ${PEM_PATH} ubuntu@your-terraform-ec2-ip << 'EOF'
+                    ssh -o StrictHostKeyChecking=no -i ${PEM_PATH} ubuntu@${TFE_IP} << 'EOF'
                         set -e
                         echo "✅ Connected to Terraform EC2"
 
-                        # Clone the repo if not exists
                         if [ ! -d my-tfe-ansible ]; then
                             git clone ${GITHUB_REPO}
                         fi
@@ -45,18 +43,13 @@ pipeline {
                         terraform apply -auto-approve tfplan
 
                         echo "📦 Running Ansible"
+                        EC2_IP=\$(terraform output -raw instance_public_ip)
+                        echo "Target EC2 IP: \$EC2_IP"
 
-                        # Get the EC2 instance IP from Terraform output
-                        export EC2_IP=\$(terraform output -raw instance_public_ip)
-
-                        echo "Using EC2_IP: \$EC2_IP"
-
-                        # Run Ansible using EC2_IP
-                     ansible-playbook -i "\$EC2_IP," -u ec2-user \
+                        ansible-playbook -i "\$EC2_IP," -u ec2-user \
                           --private-key ~/my-sample-app.pem \
                           --ssh-extra-args="-o StrictHostKeyChecking=no" \
                           install_apache.yml
-                        
 
                         echo "🌐 Verifying Apache"
                         curl http://\$EC2_IP
