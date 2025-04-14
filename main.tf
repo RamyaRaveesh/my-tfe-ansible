@@ -11,8 +11,8 @@ resource "aws_instance" "my_server" {
     Name = "MyServer"
   }
 }
-resource "aws_security_group" "my_sg" {
-  name_prefix = "my_sg_"
+resource "aws_security_group" "web_sg" {
+  name_prefix = "web_sg_"
 
   ingress {
     from_port   = 80
@@ -37,5 +37,5 @@ resource "aws_security_group" "my_sg" {
 }
 
 output "instance_public_ip" {
-  value = aws_instance.web_server.public_ip
+  value = aws_instance.my_server.public_ip
 }
