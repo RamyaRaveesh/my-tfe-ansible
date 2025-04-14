@@ -23,7 +23,7 @@
               <h1>Welcome to My Page!!</h1>
               <p>Hosting a web page on an EC2 instance, deploying it using Terraform for infrastructure management, Ansible for configuration, and Jenkins for CI/CD.</p>
               <p></p>
-              <h3>-by Ramya Shridhar</h3>
+              <h3>-by Ramya Raveesh</h3>
             </body>
           </html>
         dest: /var/www/html/index.html
