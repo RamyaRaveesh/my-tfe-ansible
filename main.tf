@@ -1,18 +1,18 @@
 provider "aws" {
   region = "eu-north-1"  # Choose the region you're working in
 }
-resource "aws_instance" "web_server" {
+resource "aws_instance" "my_server" {
   ami = "ami-09bf0117c5b84b0f7"  # Amazon Linux 2023, eu-north-1
   instance_type = "t3.micro"
   key_name      = "my-sample-app"  # Replace with your EC2 key pair
   security_groups = [aws_security_group.web_sg.name]
 
   tags = {
-    Name = "WebServer"
+    Name = "MyServer"
   }
 }
-resource "aws_security_group" "web_sg" {
-  name_prefix = "web_sg_"
+resource "aws_security_group" "my_sg" {
+  name_prefix = "my_sg_"
 
   ingress {
     from_port   = 80
