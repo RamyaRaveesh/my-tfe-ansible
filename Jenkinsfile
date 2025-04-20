@@ -76,6 +76,27 @@ EOF
             }
         }
     }
+stage('Collect System Metrics') {
+    steps {
+        script {
+            echo "📡 Collecting system metrics from Prometheus..."
+
+            // Replace localhost with actual IP if Prometheus is running on another server
+            def cpuUsage = sh(
+                script: """curl -s 'http://localhost:9090/api/v1/query?query=100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[1m])) * 100)'""",
+                returnStdout: true
+            ).trim()
+
+            def memUsage = sh(
+                script: """curl -s 'http://localhost:9090/api/v1/query?query=(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100'""",
+                returnStdout: true
+            ).trim()
+
+            echo "🧠 Memory Usage: ${memUsage}"
+            echo "🖥️  CPU Usage: ${cpuUsage}"
+        }
+    }
+}
 
     post {
         success {
