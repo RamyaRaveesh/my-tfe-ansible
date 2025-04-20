@@ -5,7 +5,7 @@ pipeline {
         PEM_PATH = '/var/lib/jenkins/my-sample-app.pem'                  // Local PEM file
         GITHUB_REPO = 'https://github.com/RamyaRaveesh/my-tfe-ansible.git'
         AWS_REGION = 'eu-north-1'
-        TFE_IP = '16.170.246.135'                                       // Terraform EC2 instance
+        TFE_IP = '51.20.64.125'  // Terraform EC2 instance
         REMOTE_PEM_PATH = '/home/ubuntu/my-sample-app.pem'              // Remote PEM location
     }
 
@@ -76,31 +76,4 @@ EOF
             }
         }
 }
-    post {
-        success {
-            emailext(
-                to: 'ramyashridharmoger@gmail.com',
-                subject: "✅ Pipeline Success: ${currentBuild.fullDisplayName}",
-                body: """The pipeline ran successfully!
-
-Build: ${currentBuild.fullDisplayName}
-Status: Success
-Commit: ${env.GIT_COMMIT}
-URL: ${env.BUILD_URL}"""
-            )
-        }
-
-        failure {
-            emailext(
-                to: 'ramyashridharmoger@gmail.com',
-                subject: "❌ Pipeline Failure: ${currentBuild.fullDisplayName}",
-                body: """Pipeline failed!
-
-Build: ${currentBuild.fullDisplayName}
-Status: Failure
-Commit: ${env.GIT_COMMIT}
-URL: ${env.BUILD_URL}"""
-            )
-        }
-    }
 }
