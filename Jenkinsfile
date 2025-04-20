@@ -75,7 +75,6 @@ EOF
                 }
             }
         }
-    }
 stage('Collect System Metrics') {
     steps {
         script {
@@ -97,7 +96,7 @@ stage('Collect System Metrics') {
         }
     }
 }
-
+}
     post {
         success {
             emailext(
