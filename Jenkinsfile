@@ -71,15 +71,27 @@ ssh -o StrictHostKeyChecking=no -i ${PEM_PATH} ubuntu@${TFE_IP} << 'EOF'
   echo "🌐 Apache installed. Now performing security scan with ZAP."
 
   # Run OWASP ZAP Security Scan
-  docker run --rm -v /home/ubuntu:/zap/wrk ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t http://\$EC2_IP -r /zap/wrk/zap_report.html
-
-  # Optional: move report to a known location
-  scp -i ${REMOTE_PEM_PATH} /zap/wrk/zap_report.html ubuntu@${TFE_IP}:/home/ubuntu/zap_report.html
+  ssh -o StrictHostKeyChecking=no -i ${PEM_PATH} ubuntu@${TFE_IP} << 'EOF2'
+  # Assuming OWASP ZAP is installed and set up on the EC2 instance
+  curl -X GET "http://localhost:8080/JSON/ascan/action/scan/?url=http://\$EC2_IP" -H "accept: application/json"
+  EOF2
 
   echo "🌐 Verifying Apache"
   curl http://\$EC2_IP
 EOF
 """
+                }
+            }
+        }
+
+        stage('Run Trivy Scan') {
+            steps {
+                script {
+                    // Run Trivy to scan the infrastructure (EC2 instance) from Jenkins
+                    echo "🔎 Running Trivy Scan"
+                    sh """
+                        trivy fs --severity HIGH,CRITICAL /path/to/scan
+                    """
                 }
             }
         }
