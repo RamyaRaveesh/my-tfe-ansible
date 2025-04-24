@@ -95,6 +95,7 @@ EOF
         }
     }
 }
+}        
 post {
     always {
         script {
