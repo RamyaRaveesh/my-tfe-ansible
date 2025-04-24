@@ -70,11 +70,8 @@ ssh -o StrictHostKeyChecking=no -i ${PEM_PATH} ubuntu@${TFE_IP} << 'EOF'
 
   echo "🌐 Apache installed. Now performing security scan with ZAP."
 
-  # Run OWASP ZAP Security Scan
-  ssh -o StrictHostKeyChecking=no -i ${PEM_PATH} ubuntu@${TFE_IP} << 'EOF2'
-  # Assuming OWASP ZAP is installed and set up on the EC2 instance
-  curl -X GET "http://localhost:8080/JSON/ascan/action/scan/?url=http://\$EC2_IP" -H "accept: application/json"
-  EOF2
+  echo "🔐 Running OWASP ZAP Security Scan"
+curl -X GET "http://localhost:8080/JSON/ascan/action/scan/?url=http://\$EC2_IP" -H "accept: application/json" > zap_report.html
 
   echo "🌐 Verifying Apache"
   curl http://\$EC2_IP
