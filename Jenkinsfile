@@ -70,7 +70,13 @@ ssh -o StrictHostKeyChecking=no -i ${PEM_PATH} ubuntu@${TFE_IP} << 'EOF'
 
   echo "🌐 Apache installed. Now performing security scan with ZAP."
 
-  echo "🔐 Running OWASP ZAP Security Scan"
+ echo "🔐 Starting OWASP ZAP in daemon mode"
+nohup zap.sh -daemon -host 127.0.0.1 -port 8080 -config api.disablekey=true > zap.log 2>&1 &
+
+echo "⏳ Waiting for ZAP to be ready..."
+sleep 15  # Give it time to start (can tweak depending on EC2 size)
+
+echo "🔐 Running OWASP ZAP Security Scan"
 curl -X GET "http://localhost:8080/JSON/ascan/action/scan/?url=http://\$EC2_IP" -H "accept: application/json" > zap_report.html
 
   echo "🌐 Verifying Apache"
