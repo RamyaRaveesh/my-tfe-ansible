@@ -85,36 +85,35 @@ EOF
         }
 
         stage('Run Trivy Scan') {
-            steps {
-                script {
-                    // Run Trivy to scan the infrastructure (EC2 instance) from Jenkins
-                    echo "🔎 Running Trivy Scan"
-                    sh """
-                        trivy fs --severity HIGH,CRITICAL /path/to/scan
-                    """
-                }
-            }
+    steps {
+        script {
+            // Run Trivy to scan the infrastructure (EC2 instance) from Jenkins
+            echo "🔎 Running Trivy Scan"
+            sh """
+                trivy fs --severity HIGH,CRITICAL /path/to/scan > trivy_report.txt
+            """
         }
+    }
+}
+post {
+    always {
+        script {
+            // After the scan, copy the report from the EC2 instance
+            sh "scp -o StrictHostKeyChecking=no -i ${PEM_PATH} ubuntu@${TFE_IP}:/home/ubuntu/zap_report.html ."
+            sh "scp -o StrictHostKeyChecking=no -i ${PEM_PATH} ubuntu@${TFE_IP}:/home/ubuntu/trivy_report.txt ."
 
-        // Optional: Email the ZAP report
-        post {
-            always {
-                script {
-                    // After the scan, copy the report from the EC2 instance
-                    sh "scp -o StrictHostKeyChecking=no -i ${PEM_PATH} ubuntu@${TFE_IP}:/home/ubuntu/zap_report.html ."
-
-                    // Send an email with the report attached
-                    emailext (
-                        subject: "Jenkins Build + ZAP Security Scan Report",
-                        body: """
-                        <h3>Build Status: ${currentBuild.currentResult}</h3>
-                        <p>Check attached ZAP report for security scan results.</p>
-                        """,
-                        attachmentsPattern: 'zap_report.html',
-                        to: 'ramyashridharmoger@gmail.com'
-                    )
-                }
-            }
+            // Send an email with both ZAP and Trivy reports attached
+            emailext (
+                subject: "Jenkins Build + Security Scan Reports",
+                body: """
+                <h3>Build Status: ${currentBuild.currentResult}</h3>
+                <p>Check attached reports for security scan results from ZAP and Trivy.</p>
+                """,
+                attachmentsPattern: 'zap_report.html,trivy_report.txt',
+                to: 'ramyashridharmoger@gmail.com'
+            )
         }
+    }
+}
     }
 }
