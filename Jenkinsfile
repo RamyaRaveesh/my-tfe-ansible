@@ -68,6 +68,14 @@ ssh -o StrictHostKeyChecking=no -i ${PEM_PATH} ubuntu@${TFE_IP} << 'EOF'
     --ssh-extra-args="-o StrictHostKeyChecking=no" \\
     install_apache.yml
 
+  echo "🌐 Apache installed. Now performing security scan with ZAP."
+
+  # Run OWASP ZAP Security Scan
+  docker run --rm -v /home/ubuntu:/zap/wrk ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t http://\$EC2_IP -r /zap/wrk/zap_report.html
+
+  # Optional: move report to a known location
+  scp -i ${REMOTE_PEM_PATH} /zap/wrk/zap_report.html ubuntu@${TFE_IP}:/home/ubuntu/zap_report.html
+
   echo "🌐 Verifying Apache"
   curl http://\$EC2_IP
 EOF
@@ -75,5 +83,26 @@ EOF
                 }
             }
         }
-}
+
+        // Optional: Email the ZAP report
+        post {
+            always {
+                script {
+                    // After the scan, copy the report from the EC2 instance
+                    sh "scp -o StrictHostKeyChecking=no -i ${PEM_PATH} ubuntu@${TFE_IP}:/home/ubuntu/zap_report.html ."
+
+                    // Send an email with the report attached
+                    emailext (
+                        subject: "Jenkins Build + ZAP Security Scan Report",
+                        body: """
+                        <h3>Build Status: ${currentBuild.currentResult}</h3>
+                        <p>Check attached ZAP report for security scan results.</p>
+                        """,
+                        attachmentsPattern: 'zap_report.html',
+                        to: 'ramyashridharmoger@gmail.com'
+                    )
+                }
+            }
+        }
+    }
 }
