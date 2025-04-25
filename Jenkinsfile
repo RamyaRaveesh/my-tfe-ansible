@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        PEM_PATH = '/opt/keys/my-sample-app.pem'                  // Local PEM file
+        PEM_PATH = '/var/lib/jenkins/my-sample-app.pem'                  // Local PEM file
         GITHUB_REPO = 'https://github.com/RamyaRaveesh/my-tfe-ansible.git'
         AWS_REGION = 'eu-north-1'
         TFE_IP = '51.20.64.125'  // Terraform EC2 instance
