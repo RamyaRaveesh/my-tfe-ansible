@@ -2,11 +2,12 @@ pipeline {
     agent any
 
     environment {
-        PEM_PATH = '/var/lib/jenkins/my-sample-app.pem'                  // Local PEM file
+        PEM_PATH = '/var/lib/jenkins/my-sample-app.pem'                  // Local PEM file for Jenkins
         GITHUB_REPO = 'https://github.com/RamyaRaveesh/my-tfe-ansible.git'
         AWS_REGION = 'eu-north-1'
-        TFE_IP = '51.20.64.125'  // Terraform EC2 instance
-        REMOTE_PEM_PATH = '/home/ubuntu/my-sample-app.pem'              // Remote PEM location
+        TFE_IP = '51.20.64.125'  // Terraform EC2 instance (for initial provisioning)
+        REMOTE_PEM_PATH = '/home/ubuntu/my-sample-app.pem'              // Remote PEM location on TFE instance
+        WEB_SERVER_IP = '13.61.11.249'  // Replace with the IP of your Web Server EC2 (where ZAP is installed)
     }
 
     triggers {
@@ -41,7 +42,7 @@ pipeline {
                         echo "✅ PEM file already exists on the remote EC2. Skipping file copy."
                     }
 
-                    // Directly run SSH + heredoc with properly aligned EOF
+                    // Run Terraform & Ansible on Remote EC2
                     sh """#!/bin/bash
 ssh -o StrictHostKeyChecking=no -i ${PEM_PATH} ubuntu@${TFE_IP} << 'EOF'
   set -e
@@ -70,14 +71,20 @@ ssh -o StrictHostKeyChecking=no -i ${PEM_PATH} ubuntu@${TFE_IP} << 'EOF'
 
   echo "🌐 Apache installed. Now performing security scan with ZAP."
 
- echo "🔐 Starting OWASP ZAP in daemon mode"
-nohup zap.sh -daemon -host 127.0.0.1 -port 8080 -config api.disablekey=true > zap.log 2>&1 &
+  # Start ZAP in daemon mode on the Web Server instance
+  echo "🔐 Starting OWASP ZAP in daemon mode"
+  nohup zap.sh -daemon -host 0.0.0.0 -port 8080 -config api.disablekey=true > zap.log 2>&1 &
 
-echo "⏳ Waiting for ZAP to be ready..."
-sleep 15  # Give it time to start (can tweak depending on EC2 size)
+  echo "⏳ Waiting for ZAP to be ready..."
+  while ! curl --silent --fail http://127.0.0.1:8080; do
+      echo "Waiting for ZAP to be ready..."
+      sleep 5
+  done
+  echo "ZAP is ready."
 
-echo "🔐 Running OWASP ZAP Security Scan"
-curl -X GET "http://localhost:8080/JSON/ascan/action/scan/?url=http://\$EC2_IP" -H "accept: application/json" > zap_report.html
+  # Run the security scan with ZAP against the application running on the EC2 instance
+  echo "🔐 Running OWASP ZAP Security Scan"
+  curl -X GET "http://localhost:8080/JSON/ascan/action/scan/?url=http://\$EC2_IP" -H "accept: application/json" > zap_report.html
 
   echo "🌐 Verifying Apache"
   curl http://\$EC2_IP
@@ -86,10 +93,11 @@ EOF
                 }
             }
         }
+
         stage('Run Trivy Scan') {
             steps {
                 script {
-                    echo "🔎 Running Trivy Scan from Jenkins EC2"
+                    echo "🔎 Running Trivy Scan on Jenkins Instance"
                     // Scan the Jenkins workspace or a relevant directory
                     sh """
                         trivy fs --severity HIGH,CRITICAL . > trivy_report.txt
@@ -98,11 +106,12 @@ EOF
             }
         }
     }
+
     post {
         always {
             script {
-                // Copy ZAP report from the remote EC2 (TFE instance)
-                sh "scp -o StrictHostKeyChecking=no -i ${PEM_PATH} ubuntu@${TFE_IP}:/home/ubuntu/my-tfe-ansible/zap_report.html . || true"
+                // Copy ZAP report from the remote EC2 (Web Server instance)
+                sh "scp -o StrictHostKeyChecking=no -i ${PEM_PATH} ubuntu@${WEB_SERVER_IP}:/home/ubuntu/zap_report.html . || true"
 
                 // Send both reports by email
                 emailext (
