@@ -22,28 +22,27 @@ pipeline {
                 sh 'echo "✅ Checked out code (for Jenkins logs only)!"'
             }
         }
-
         stage('Run Terraform & Ansible from Remote') {
-            steps {
-                script {
-                    sh "chmod 400 ${PEM_PATH}"
+    steps {
+        script {
+            sh "chmod 400 ${PEM_PATH}"
 
-                    def fileExistsCheck = sh(
-                        script: "ssh -o StrictHostKeyChecking=no -i ${PEM_PATH} ubuntu@${TFE_IP} 'test -f ${REMOTE_PEM_PATH} && echo true || echo false'",
-                        returnStdout: true
-                    ).trim()
+            def fileExistsCheck = sh(
+                script: "ssh -o StrictHostKeyChecking=no -i ${PEM_PATH} ubuntu@${TFE_IP} 'test -f ${REMOTE_PEM_PATH} && echo true || echo false'",
+                returnStdout: true
+            ).trim()
 
-                    if (fileExistsCheck == "false") {
-                        sh """
-                            echo "📤 Copying PEM file to Terraform EC2"
-                            scp -o StrictHostKeyChecking=no -i ${PEM_PATH} ${PEM_PATH} ubuntu@${TFE_IP}:${REMOTE_PEM_PATH}
-                        """
-                    } else {
-                        echo "✅ PEM file already exists on the remote EC2. Skipping file copy."
-                    }
+            if (fileExistsCheck == "false") {
+                sh """
+                    echo "📤 Copying PEM file to Terraform EC2"
+                    scp -o StrictHostKeyChecking=no -i ${PEM_PATH} ${PEM_PATH} ubuntu@${TFE_IP}:${REMOTE_PEM_PATH}
+                """
+            } else {
+                echo "✅ PEM file already exists on the remote EC2. Skipping file copy."
+            }
 
-                    // Run Terraform & Ansible on Remote EC2
-                    sh """#!/bin/bash
+            // Run Terraform & Ansible on Remote EC2
+            sh """#!/bin/bash
 ssh -o StrictHostKeyChecking=no -i ${PEM_PATH} ubuntu@${TFE_IP} << 'EOF'
   set -e
   echo "✅ Connected to Terraform EC2"
@@ -71,12 +70,12 @@ ssh -o StrictHostKeyChecking=no -i ${PEM_PATH} ubuntu@${TFE_IP} << 'EOF'
 
   echo "🌐 Apache installed. Now performing security scan with ZAP."
 
-  # Start ZAP in daemon mode on the Web Server instance (this will run locally on Jenkins)
+  # Start ZAP in daemon mode locally on Jenkins with port 8081
   echo "🔐 Starting OWASP ZAP in daemon mode locally on Jenkins"
-  nohup zap.sh -daemon -host 0.0.0.0 -port 8080 -config api.disablekey=true > zap.log 2>&1 &
+  nohup zap.sh -daemon -host 0.0.0.0 -port 8081 -config api.disablekey=true > zap.log 2>&1 &
 
   echo "⏳ Waiting for ZAP to be ready..."
-  while ! curl --silent --fail http://127.0.0.1:8080; do
+  while ! curl --silent --fail http://127.0.0.1:8081; do
       echo "Waiting for ZAP to be ready..."
       sleep 5
   done
@@ -84,15 +83,15 @@ ssh -o StrictHostKeyChecking=no -i ${PEM_PATH} ubuntu@${TFE_IP} << 'EOF'
 
   # Run the security scan with ZAP against the application running on the EC2 instance (or locally)
   echo "🔐 Running OWASP ZAP Security Scan"
-  curl -X GET "http://localhost:8080/JSON/ascan/action/scan/?url=http://\$EC2_IP" -H "accept: application/json" > /var/lib/jenkins/zap_report.html
+  curl -X GET "http://localhost:8081/JSON/ascan/action/scan/?url=http://\$EC2_IP" -H "accept: application/json" > /var/lib/jenkins/zap_report.html
 
   echo "🌐 Verifying Apache"
   curl http://\$EC2_IP
 EOF
 """
-                }
-            }
         }
+    }
+}
 
         stage('Run Trivy Scan') {
             steps {
