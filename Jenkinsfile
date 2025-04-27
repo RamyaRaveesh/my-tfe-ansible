@@ -71,8 +71,8 @@ ssh -o StrictHostKeyChecking=no -i ${PEM_PATH} ubuntu@${TFE_IP} << 'EOF'
 
   echo "🌐 Apache installed. Now performing security scan with ZAP."
 
-  # Start ZAP in daemon mode on the Web Server instance
-  echo "🔐 Starting OWASP ZAP in daemon mode"
+  # Start ZAP in daemon mode on the Web Server instance (this will run locally on Jenkins)
+  echo "🔐 Starting OWASP ZAP in daemon mode locally on Jenkins"
   nohup zap.sh -daemon -host 0.0.0.0 -port 8080 -config api.disablekey=true > zap.log 2>&1 &
 
   echo "⏳ Waiting for ZAP to be ready..."
@@ -82,9 +82,9 @@ ssh -o StrictHostKeyChecking=no -i ${PEM_PATH} ubuntu@${TFE_IP} << 'EOF'
   done
   echo "ZAP is ready."
 
-  # Run the security scan with ZAP against the application running on the EC2 instance
+  # Run the security scan with ZAP against the application running on the EC2 instance (or locally)
   echo "🔐 Running OWASP ZAP Security Scan"
-  curl -X GET "http://localhost:8080/JSON/ascan/action/scan/?url=http://\$EC2_IP" -H "accept: application/json" > /home/ubuntu/zap_report.html
+  curl -X GET "http://localhost:8080/JSON/ascan/action/scan/?url=http://\$EC2_IP" -H "accept: application/json" > /var/lib/jenkins/zap_report.html
 
   echo "🌐 Verifying Apache"
   curl http://\$EC2_IP
