@@ -111,7 +111,7 @@ EOF
         always {
             script {
                 // Copy ZAP report from the remote EC2 (Web Server instance)
-                sh "scp -o StrictHostKeyChecking=no -i ${PEM_PATH} ubuntu@${WEB_SERVER_IP}:/home/ubuntu/zap_report.html . || true"
+               sh "scp -o StrictHostKeyChecking=no -i ${PEM_PATH} ec2-user@${WEB_SERVER_IP}:/home/ubuntu/zap_report.html . || true"
 
                 // Send both reports by email
                 emailext (
