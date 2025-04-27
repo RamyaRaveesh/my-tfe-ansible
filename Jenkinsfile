@@ -68,22 +68,7 @@ ssh -o StrictHostKeyChecking=no -i ${PEM_PATH} ubuntu@${TFE_IP} << 'EOF'
     --ssh-extra-args="-o StrictHostKeyChecking=no" \\
     install_apache.yml
 
-  echo "🌐 Apache installed. Now performing security scan with ZAP."
-
-  # Start ZAP in daemon mode locally on Jenkins with port 8081
-  echo "🔐 Starting OWASP ZAP in daemon mode locally on Jenkins"
-  nohup zap.sh -daemon -host 0.0.0.0 -port 8081 -config api.disablekey=true > zap.log 2>&1 &
-
-  echo "⏳ Waiting for ZAP to be ready..."
-  while ! curl --silent --fail http://127.0.0.1:8081; do
-      echo "Waiting for ZAP to be ready..."
-      sleep 5
-  done
-  echo "ZAP is ready."
-
-  # Run the security scan with ZAP against the application running on the EC2 instance (or locally)
-  echo "🔐 Running OWASP ZAP Security Scan"
-  curl -X GET "http://localhost:8081/JSON/ascan/action/scan/?url=http://\$EC2_IP" -H "accept: application/json" > /var/lib/jenkins/zap_report.html
+  echo "🌐 Apache installed."
 
   echo "🌐 Verifying Apache"
   curl http://\$EC2_IP
@@ -110,15 +95,16 @@ EOF
         always {
             script {
                 // Send both reports by email
-                emailext (
-                    subject: "Jenkins Build + Security Scan Reports",
+               emailext (
+                    subject: "Jenkins Build + Trivy Scan Report",
                     body: """
                     <h3>Build Status: ${currentBuild.currentResult}</h3>
-                    <p>Attached are the Trivy (local) and ZAP (local) security scan reports.</p>
+                    <p>Attached is the Trivy (local) security scan report.</p>
                     """,
-                    attachmentsPattern: 'zap_report.html,trivy_report.txt',
+                    attachmentsPattern: 'trivy_report.txt',
                     to: 'ramyashridharmoger@gmail.com'
                 )
+
             }
         }
     }
