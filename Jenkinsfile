@@ -7,7 +7,7 @@ pipeline {
         AWS_REGION = 'eu-north-1'
         TFE_IP = '51.20.64.125'  // Terraform EC2 instance (for initial provisioning)
         REMOTE_PEM_PATH = '/home/ubuntu/my-sample-app.pem'              // Remote PEM location on TFE instance
-        WEB_SERVER_IP = '13.61.11.249'  // Replace with the IP of your Web Server EC2 (where ZAP is installed)
+        WEB_SERVER_IP = '13.61.11.249'  // Web Server EC2 (ZAP installed here)
     }
 
     triggers {
@@ -84,7 +84,7 @@ ssh -o StrictHostKeyChecking=no -i ${PEM_PATH} ubuntu@${TFE_IP} << 'EOF'
 
   # Run the security scan with ZAP against the application running on the EC2 instance
   echo "🔐 Running OWASP ZAP Security Scan"
-  curl -X GET "http://localhost:8080/JSON/ascan/action/scan/?url=http://\$EC2_IP" -H "accept: application/json" > zap_report.html
+  curl -X GET "http://localhost:8080/JSON/ascan/action/scan/?url=http://\$EC2_IP" -H "accept: application/json" > /home/ubuntu/zap_report.html
 
   echo "🌐 Verifying Apache"
   curl http://\$EC2_IP
@@ -110,15 +110,12 @@ EOF
     post {
         always {
             script {
-                // Copy ZAP report from the remote EC2 (Web Server instance)
-               sh "scp -o StrictHostKeyChecking=no -i ${PEM_PATH} ec2-user@${WEB_SERVER_IP}:/home/ubuntu/zap_report.html . || true"
-
                 // Send both reports by email
                 emailext (
                     subject: "Jenkins Build + Security Scan Reports",
                     body: """
                     <h3>Build Status: ${currentBuild.currentResult}</h3>
-                    <p>Attached are the Trivy (local) and ZAP (remote) security scan reports.</p>
+                    <p>Attached are the Trivy (local) and ZAP (local) security scan reports.</p>
                     """,
                     attachmentsPattern: 'zap_report.html,trivy_report.txt',
                     to: 'ramyashridharmoger@gmail.com'
