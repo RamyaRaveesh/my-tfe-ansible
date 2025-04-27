@@ -77,35 +77,45 @@ EOF
         }
     }
 }
+    stage('Run Trivy Scan') {
+    steps {
+        script {
+            echo "🔎 Running Trivy Scan on Jenkins Instance"
+            
+            // Scan Terraform files for vulnerabilities
+            echo "🔍 Scanning Terraform files for vulnerabilities"
+            sh """
+                trivy fs --severity HIGH,CRITICAL --scanners vuln /var/lib/jenkins/workspace/my-web-app/terraform > trivy_terraform_report.txt
+            """
 
-        stage('Run Trivy Scan') {
-            steps {
-                script {
-                    echo "🔎 Running Trivy Scan on Jenkins Instance"
-                    // Scan the Jenkins workspace or a relevant directory
-                    sh """
-                        trivy fs --severity HIGH,CRITICAL . > trivy_report.txt
-                    """
-                }
-            }
+            // Scan Ansible Apache playbook for vulnerabilities
+            echo "🔍 Scanning Ansible Apache playbook for vulnerabilities"
+            sh """
+                trivy fs --severity HIGH,CRITICAL --scanners vuln /var/lib/jenkins/workspace/my-web-app/ansible/install_apache.yml > trivy_ansible_report.txt
+            """
+
+            // If both scans are successful, output the results
+            echo "🔍 Trivy scan completed for Terraform and Ansible."
         }
     }
+}
 
+    }
     post {
-        always {
-            script {
-                // Send both reports by email
-               emailext (
-                    subject: "Jenkins Build + Trivy Scan Report",
-                    body: """
-                    <h3>Build Status: ${currentBuild.currentResult}</h3>
-                    <p>Attached is the Trivy (local) security scan report.</p>
-                    """,
-                    attachmentsPattern: 'trivy_report.txt',
-                    to: 'ramyashridharmoger@gmail.com'
-                )
-
-            }
+    always {
+        script {
+            // Send both reports by email
+            emailext (
+                subject: "Jenkins Build + Trivy Scan Report",
+                body: """
+                <h3>Build Status: ${currentBuild.currentResult}</h3>
+                <p>Attached are the Trivy (local) security scan reports for Terraform and Ansible playbook.</p>
+                """,
+                attachmentsPattern: 'trivy_terraform_report.txt,trivy_ansible_report.txt',
+                to: 'ramyashridharmoger@gmail.com'
+            )
         }
     }
+}
+
 }
