@@ -59,7 +59,7 @@ EOF
         }
     }
 }
-    stage('Run Trivy Scan') {
+  stage('Run Trivy Scan') {
     steps {
         script {
             echo "🔎 Running Trivy Scan on Jenkins Instance"
@@ -70,7 +70,7 @@ EOF
             // Scan Terraform files for vulnerabilities (explicitly target .tf files)
             echo "🔍 Scanning Terraform files for vulnerabilities"
             sh """
-                find "${workspaceDir}" -name "*.tf" -print0 | while IFS= read -r -d $'\0' file; do
+                find "${workspaceDir}" -name "*.tf" -print0 | while IFS= read -r -d '\\0' file; do
                   trivy fs --severity HIGH,CRITICAL --scanners vuln "\$file" >> trivy_terraform_report.txt
                 done
             """
