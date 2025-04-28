@@ -25,10 +25,10 @@ pipeline {
         stage('Run Terraform & Ansible from Remote') {
     steps {
         script {
-            sh "chmod 400 ${PEM_PATH}"
+            sh "chmod 400 ${REMOTE_PEM_PATH}"
 
             def fileExistsCheck = sh(
-                script: "ssh -o StrictHostKeyChecking=no -i ${PEM_PATH} ubuntu@${TFE_IP} 'test -f ${REMOTE_PEM_PATH} && echo true || echo false'",
+                script: "ssh -o StrictHostKeyChecking=no -i ${REMOTE_PEM_PATH} ubuntu@${TFE_IP} 'test -f ${REMOTE_PEM_PATH} && echo true || echo false'",
                 returnStdout: true
             ).trim()
 
@@ -43,7 +43,7 @@ pipeline {
 
             // Run Terraform & Ansible on Remote EC2
             sh """#!/bin/bash
-ssh -o StrictHostKeyChecking=no -i ${PEM_PATH} ubuntu@${TFE_IP} << 'EOF'
+ssh -o StrictHostKeyChecking=no -i ${REMOTE_PEM_PATH} ubuntu@${TFE_IP} << 'EOF'
   set -e
   echo "✅ Connected to Terraform EC2"
 
