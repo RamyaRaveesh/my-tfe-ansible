@@ -59,7 +59,7 @@ EOF
         }
     }
 }
-        stage('Run Trivy Scan') {
+       stage('Run Trivy Scan') {
     steps {
         script {
             echo "🔎 Running Trivy Scan on Jenkins Instance"
@@ -67,11 +67,15 @@ EOF
             // Determine the workspace directory
             def workspaceDir = sh(script: 'pwd', returnStdout: true).trim()
 
-            // Scan Terraform files for misconfigurations
+            // Scan Terraform files for misconfigurations (explicitly target .tf files)
             echo "🔍 Scanning Terraform files for misconfigurations"
             sh """
                 rm -f trivy_terraform_report.txt # Ensure the report file is clean
-                trivy config --severity HIGH,CRITICAL "${workspaceDir}"/*.tf -f table -o trivy_terraform_report.txt
+                for file in "${workspaceDir}"/*.tf; do
+                  if [ -f "\$file" ]; then
+                    trivy config --severity HIGH,CRITICAL "\$file" -f table >> trivy_terraform_report.txt
+                  fi
+                done
             """
 
             def ansibleScanPath = "${workspaceDir}/install_apache.yml"
