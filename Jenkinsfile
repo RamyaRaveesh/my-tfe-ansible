@@ -22,11 +22,11 @@ pipeline {
                 sh 'echo "✅ Checked out code (for Jenkins logs only)!"'
             }
         }
-        stage('Run Terraform & Ansible from Remote') {
+       stage('Run Terraform & Ansible from Remote') {
     steps {
         script {
             sh """#!/bin/bash
-ssh -o StrictHostKeyChecking=no -i "${PEM_PATH}" ubuntu@${TFE_IP} << 'EOF'
+ssh -v -o StrictHostKeyChecking=no -i "${PEM_PATH}" ubuntu@${TFE_IP} << 'EOF'
     set -e
     echo "✅ Connected to Terraform EC2"
 
