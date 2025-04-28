@@ -25,53 +25,39 @@ pipeline {
         stage('Run Terraform & Ansible from Remote') {
     steps {
         script {
-            sh "chmod 400 ${PEM_PATH}"
+            def remotePemPath = '/home/ubuntu/my-sample-app.pem' // Use the existing path on the Terraform instance
 
-            def fileExistsCheck = sh(
-                script: "ssh -o StrictHostKeyChecking=no -i ${PEM_PATH} ubuntu@${TFE_IP} 'test -f ${PEM_PATH} && echo true || echo false'",
-                returnStdout: true
-            ).trim()
-
-            if (fileExistsCheck == "false") {
-                sh """
-                    echo "📤 Copying PEM file to Terraform EC2"
-                    scp -o StrictHostKeyChecking=no -i ${PEM_PATH} ${PEM_PATH} ubuntu@${TFE_IP}:${REMOTE_PEM_PATH}
-                """
-            } else {
-                echo "✅ PEM file already exists on the remote EC2. Skipping file copy."
-            }
-
-            // Run Terraform & Ansible on Remote EC2
+            // Run Terraform & Ansible on Remote EC2 using the remote PEM
             sh """#!/bin/bash
-ssh -o StrictHostKeyChecking=no -i ${PEM_PATH} ubuntu@${TFE_IP} << 'EOF'
-  set -e
-  echo "✅ Connected to Terraform EC2"
+ssh -o StrictHostKeyChecking=no -i ${remotePemPath} ubuntu@${TFE_IP} << 'EOF'
+    set -e
+    echo "✅ Connected to Terraform EC2"
 
-  if [ ! -d my-tfe-ansible ]; then
-    git clone ${GITHUB_REPO}
-  fi
+    if [ ! -d my-tfe-ansible ]; then
+        git clone ${GITHUB_REPO}
+    fi
 
-  cd my-tfe-ansible
-  git pull origin main
+    cd my-tfe-ansible
+    git pull origin main
 
-  echo "🧱 Running Terraform"
-  terraform init -input=false
-  terraform plan -out=tfplan
-  terraform apply -auto-approve tfplan
+    echo "🧱 Running Terraform"
+    terraform init -input=false
+    terraform plan -out=tfplan
+    terraform apply -auto-approve tfplan
 
-  echo "📦 Running Ansible"
-  EC2_IP=\$(terraform output -raw instance_public_ip)
-  echo "Target EC2 IP: \$EC2_IP"
+    echo "📦 Running Ansible"
+    EC2_IP=\$(terraform output -raw instance_public_ip)
+    echo "Target EC2 IP: \$EC2_IP"
 
-  ansible-playbook -i "\$EC2_IP," -u ec2-user \\
-    --private-key ${REMOTE_PEM_PATH} \\
-    --ssh-extra-args="-o StrictHostKeyChecking=no" \\
-    install_apache.yml
+    ansible-playbook -i "\$EC2_IP," -u ec2-user \\
+        --private-key ${remotePemPath} \\
+        --ssh-extra-args="-o StrictHostKeyChecking=no" \\
+        install_apache.yml
 
-  echo "🌐 Apache installed."
+    echo "🌐 Apache installed."
 
-  echo "🌐 Verifying Apache"
-  curl http://\$EC2_IP
+    echo "🌐 Verifying Apache"
+    curl http://\$EC2_IP
 EOF
 """
         }
