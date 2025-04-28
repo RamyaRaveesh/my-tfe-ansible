@@ -66,15 +66,14 @@ EOF
 
             // Determine the workspace directory
             def workspaceDir = sh(script: 'pwd', returnStdout: true).trim()
-            def terraformScanPath = "${workspaceDir}/terraform"
 
-            // Scan Terraform files for vulnerabilities
+            // Scan Terraform files for vulnerabilities in the workspace root
             echo "🔍 Scanning Terraform files for vulnerabilities"
             sh """
-                trivy fs --severity HIGH,CRITICAL --scanners vuln "${terraformScanPath}" > trivy_terraform_report.txt
+                trivy fs --severity HIGH,CRITICAL --scanners vuln "${workspaceDir}" > trivy_terraform_report.txt
             """
 
-            def ansibleScanPath = "${workspaceDir}/ansible/install_apache.yml"
+            def ansibleScanPath = "${workspaceDir}/install_apache.yml" // Assuming install_apache.yml is in the root
 
             // Scan Ansible Apache playbook for vulnerabilities
             echo "🔍 Scanning Ansible Apache playbook for vulnerabilities"
