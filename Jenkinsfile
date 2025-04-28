@@ -63,17 +63,23 @@ EOF
     steps {
         script {
             echo "🔎 Running Trivy Scan on Jenkins Instance"
-            
+
+            // Determine the workspace directory
+            def workspaceDir = sh(script: 'pwd', returnStdout: true).trim()
+            def terraformScanPath = "${workspaceDir}/terraform"
+
             // Scan Terraform files for vulnerabilities
             echo "🔍 Scanning Terraform files for vulnerabilities"
             sh """
-                trivy fs --severity HIGH,CRITICAL --scanners vuln /var/lib/jenkins/workspace/my-tfe-anisble/terraform > trivy_terraform_report.txt
+                trivy fs --severity HIGH,CRITICAL --scanners vuln "${terraformScanPath}" > trivy_terraform_report.txt
             """
+
+            def ansibleScanPath = "${workspaceDir}/ansible/install_apache.yml"
 
             // Scan Ansible Apache playbook for vulnerabilities
             echo "🔍 Scanning Ansible Apache playbook for vulnerabilities"
             sh """
-                trivy fs --severity HIGH,CRITICAL --scanners vuln /var/lib/jenkins/workspace/my-tfe-ansible/ansible/install_apache.yml > trivy_ansible_report.txt
+                trivy fs --severity HIGH,CRITICAL --scanners vuln "${ansibleScanPath}" > trivy_ansible_report.txt
             """
 
             // If both scans are successful, output the results
@@ -81,7 +87,6 @@ EOF
         }
     }
 }
-
     }
     post {
     always {
