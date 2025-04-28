@@ -67,13 +67,13 @@ EOF
             // Scan Terraform files for vulnerabilities
             echo "🔍 Scanning Terraform files for vulnerabilities"
             sh """
-                trivy fs --severity HIGH,CRITICAL --scanners vuln /var/lib/jenkins/workspace/my-web-app/terraform > trivy_terraform_report.txt
+                trivy fs --severity HIGH,CRITICAL --scanners vuln /var/lib/jenkins/workspace/my-tfe-anisble/terraform > trivy_terraform_report.txt
             """
 
             // Scan Ansible Apache playbook for vulnerabilities
             echo "🔍 Scanning Ansible Apache playbook for vulnerabilities"
             sh """
-                trivy fs --severity HIGH,CRITICAL --scanners vuln /var/lib/jenkins/workspace/my-web-app/ansible/install_apache.yml > trivy_ansible_report.txt
+                trivy fs --severity HIGH,CRITICAL --scanners vuln /var/lib/jenkins/workspace/my-tfe-ansible/ansible/install_apache.yml > trivy_ansible_report.txt
             """
 
             // If both scans are successful, output the results
