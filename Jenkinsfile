@@ -91,16 +91,6 @@ EOF
         }
     }
 }
-        stage('Scan Ansible Playbook with Ansible Lint') {
-            steps {
-                script {
-                    echo "🔍 Scanning Ansible Apache playbook with Ansible Lint"
-                    def workspaceDir = sh(script: 'pwd', returnStdout: true).trim()
-                    def ansibleScanPath = "${workspaceDir}/install_apache.yml"
-                    sh "ansible-lint ${ansibleScanPath} -v --nocolor > ansible_lint_report.txt || true"
-                }
-            }
-        }
     }
     post {
     always {
@@ -112,7 +102,7 @@ EOF
                     <h3>Build Status: ${currentBuild.currentResult}</h3>
                     <p>Attached are the Trivy security scan reports for Terraform and Ansible playbook.</p>
                 """,
-                attachmentsPattern: 'trivy_terraform_report.txt,trivy_ansible_report.txt,ansible_lint_report.txt',
+                attachmentsPattern: 'trivy_terraform_report.txt,trivy_ansible_report.txt',
                 to: 'ramyashridharmoger@gmail.com'
             )
         }
