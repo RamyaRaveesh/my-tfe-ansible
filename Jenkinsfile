@@ -94,10 +94,10 @@ EOF
             emailext (
                 subject: "Jenkins Build + Trivy Scan Report",
                 body: """
-                <h3>Build Status: ${currentBuild.currentResult}</h3>
-                <p>Attached are the Trivy (local) security scan reports for Terraform and Ansible playbook.</p>
+                    <h3>Build Status: ${currentBuild.currentResult}</h3>
+                    <p>Attached are the Trivy security scan reports for Terraform and Ansible playbook.</p>
                 """,
-                attachmentsPattern: 'trivy_terraform_report.txt,trivy_ansible_report.txt',
+                attachmentsPattern: 'trivy_terraform_report.json,trivy_ansible_report.json',
                 to: 'ramyashridharmoger@gmail.com'
             )
         }
