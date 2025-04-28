@@ -25,9 +25,8 @@ pipeline {
         stage('Run Terraform & Ansible from Remote') {
     steps {
         script {
-            // Run Terraform & Ansible on Remote EC2 using the remote PEM
             sh """#!/bin/bash
-ssh -o StrictHostKeyChecking=no -i ${PEM_PATH} ubuntu@${TFE_IP} << 'EOF'
+ssh -o StrictHostKeyChecking=no -i "${PEM_PATH}" ubuntu@${TFE_IP} << 'EOF'
     set -e
     echo "✅ Connected to Terraform EC2"
 
@@ -47,8 +46,7 @@ ssh -o StrictHostKeyChecking=no -i ${PEM_PATH} ubuntu@${TFE_IP} << 'EOF'
     EC2_IP=\$(terraform output -raw instance_public_ip)
     echo "Target EC2 IP: \$EC2_IP"
 
-    ansible-playbook -i "\$EC2_IP," -u ec2-user \\
-        --private-key ${PEM_PATH} \\
+    ansible-playbook -i "${PEM_PATH}" -u ec2-user \\
         --ssh-extra-args="-o StrictHostKeyChecking=no" \\
         install_apache.yml
 
