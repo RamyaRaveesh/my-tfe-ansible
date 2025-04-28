@@ -59,7 +59,7 @@ EOF
         }
     }
 }
-  stage('Run Trivy Scan') {
+        stage('Run Trivy Scan') {
     steps {
         script {
             echo "🔎 Running Trivy Scan on Jenkins Instance"
@@ -67,42 +67,42 @@ EOF
             // Determine the workspace directory
             def workspaceDir = sh(script: 'pwd', returnStdout: true).trim()
 
-            // Scan Terraform files for vulnerabilities (explicitly target .tf files with loop)
+            // Scan Terraform files for vulnerabilities (explicitly target .tf files)
             echo "🔍 Scanning Terraform files for vulnerabilities"
             sh """
-                find "${workspaceDir}" -name "*.tf" -print0 | while IFS= read -r -d '\\0' file; do
-                  trivy fs --severity HIGH,CRITICAL --scanners vuln "\$file" -f json -o "trivy_terraform_\$(basename \\"\$file\\").json"
+                rm -f trivy_terraform_report.txt # Ensure the report file is clean
+                for file in "${workspaceDir}"/*.tf; do
+                  if [ -f "\$file" ]; then
+                    trivy fs --severity HIGH,CRITICAL --scanners vuln "\$file" -f text >> trivy_terraform_report.txt
+                  fi
                 done
-                # Combine the individual JSON reports into one (optional, for easier attachment)
-                jq -s '.[0]' trivy_terraform_*.json > trivy_terraform_report.json || true
-                rm -f trivy_terraform_*.json
             """
 
             def ansibleScanPath = "${workspaceDir}/install_apache.yml"
 
-            // Scan Ansible Apache playbook for vulnerabilities (using config scan)
-            echo "🔍 Scanning Ansible Apache playbook for vulnerabilities"
+            // Scan Ansible Apache playbook for misconfigurations (output to text)
+            echo "🔍 Scanning Ansible Apache playbook for misconfigurations"
             sh """
-                trivy config --severity HIGH,CRITICAL "${ansibleScanPath}" -f json -o trivy_ansible_report.json
+                trivy config --severity HIGH,CRITICAL "${ansibleScanPath}" -f text -o trivy_ansible_report.txt
             """
 
             // If both scans are successful, output the results
             echo "🔍 Trivy scan completed for Terraform and Ansible."
         }
     }
-}
+}     
     }
     post {
     always {
         script {
             // Send both reports by email
-            emailext (
+           emailext (
                 subject: "Jenkins Build + Trivy Scan Report",
                 body: """
                     <h3>Build Status: ${currentBuild.currentResult}</h3>
                     <p>Attached are the Trivy security scan reports for Terraform and Ansible playbook.</p>
                 """,
-                attachmentsPattern: 'trivy_terraform_report.json,trivy_ansible_report.json',
+                attachmentsPattern: 'trivy_terraform_report.txt,trivy_ansible_report.txt',
                 to: 'ramyashridharmoger@gmail.com'
             )
         }
