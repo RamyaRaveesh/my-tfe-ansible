@@ -73,7 +73,7 @@ EOF
                 rm -f trivy_terraform_report.txt # Ensure the report file is clean
                 for file in "${workspaceDir}"/*.tf; do
                   if [ -f "\$file" ]; then
-                    trivy fs --severity HIGH,CRITICAL --scanners vuln "\$file" -f text >> trivy_terraform_report.txt
+                    trivy fs --severity HIGH,CRITICAL --scanners vuln "\$file" -f table >> trivy_terraform_report.txt
                   fi
                 done
             """
